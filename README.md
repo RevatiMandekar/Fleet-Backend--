@@ -107,9 +107,4 @@ curl -X POST http://localhost:4000/api/vehicles \
 - If Mongo isn’t connecting, confirm `MONGO_URI` and that the daemon is running
 - If auth fails, check `JWT_SECRET` is set and you’re sending `Authorization: Bearer <token>`
 
-## What’s next
-- Trips (assignments, status updates, history)
-- Aggregations and analytics
-- Email notifications (Nodemailer)
-- Real-time updates (Socket.IO)
-- Stronger validation with Joi/express-validator and full test coverage
+
