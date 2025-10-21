@@ -43,17 +43,17 @@ Establish backend architecture and secure authentication
 # Register Admin
 curl -X POST http://localhost:4000/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"name":"Admin User","email":"admin@fleet.com","password":"admin123","role":"admin"}'
+  -d '{"name":"Admin User","email":"admin@gmail.com","password":"admin123","role":"admin"}'
 
 # Register Fleet Manager
 curl -X POST http://localhost:4000/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"name":"Fleet Manager","email":"manager@fleet.com","password":"manager123","role":"fleet_manager"}'
+  -d '{"name":"Fleet Manager","email":"manager@yahoo.com","password":"manager123","role":"fleet_manager"}'
 
 # Register Driver
 curl -X POST http://localhost:4000/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"name":"Driver User","email":"driver@fleet.com","password":"driver123","role":"driver"}'
+  -d '{"name":"Driver User","email":"driver@outlook.com","password":"driver123","role":"driver"}'
 ```
 
 ### 2. Test Authentication
@@ -61,7 +61,7 @@ curl -X POST http://localhost:4000/api/auth/register \
 # Login as Admin
 curl -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@fleet.com","password":"admin123"}'
+  -d '{"email":"admin@gmail.com","password":"admin123"}'
 ```
 
 ### 3. Test Role-Based Access
