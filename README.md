@@ -27,6 +27,15 @@ A comprehensive backend service for managing fleet operations, vehicles, trips, 
 - **Security Enhancements**: Account locking, password reset, forgot password flow
 - **Mongoose Population**: Optimized queries with proper data relationships
 
+### Week 3 - Real-time Updates & Notifications ✅
+- **Socket.IO Integration**: Real-time communication with JWT authentication
+- **Live Trip Tracking**: Real-time status updates and location tracking
+- **Email Notifications**: Trip assignments, maintenance alerts, overdue trip alerts
+- **Analytics Dashboard**: Driver stats, vehicle usage, fleet-wide analytics
+- **Maintenance Alerts**: Automated monitoring and manual alert triggers
+- **Emergency System**: Instant emergency notifications to fleet managers
+- **Role-based Real-time**: Separate rooms for drivers, fleet managers, and admins
+
 ### Complete Feature Set
 - **Authentication & Authorization**: User registration, login, forgot password, role-based access
 - **User Management**: Complete CRUD with roles (admin, fleet_manager, driver)
@@ -98,10 +107,17 @@ A comprehensive backend service for managing fleet operations, vehicles, trips, 
 - `GET /api/vehicles/available` - Available vehicles
 - `GET /api/vehicles/status/:status` - Vehicles by status
 
+**Week 3 API Endpoints Added:**
+- `GET /api/analytics/driver/:driverId/stats` - Driver trip statistics and performance
+- `GET /api/analytics/vehicle/:vehicleId/stats` - Vehicle usage statistics and analytics
+- `GET /api/analytics/trips/pending-overdue` - Pending and overdue trips monitoring
+- `GET /api/analytics/fleet/dashboard` - Fleet-wide analytics dashboard
+- `POST /api/analytics/maintenance/alert` - Manual maintenance alert trigger
+
 ## Project Summary
 
 ### Total Implementation Scope
-This fleet management system represents a complete backend solution built over two development weeks:
+This fleet management system represents a complete backend solution built over three development weeks:
 
 **Week 1 Foundation** (13 endpoints):
 - Authentication system with JWT
@@ -116,7 +132,14 @@ This fleet management system represents a complete backend solution built over t
 - Enhanced security features
 - Advanced relationship queries
 
-**Total: 28 API Endpoints** covering:
+**Week 3 Real-time & Analytics** (5 additional endpoints):
+- Socket.IO real-time communication
+- Email notification system
+- Advanced analytics dashboard
+- Maintenance and overdue trip alerts
+- Live trip tracking and monitoring
+
+**Total: 33 API Endpoints + Socket.IO Events** covering:
 - ✅ Complete authentication flow with security features
 - ✅ Full CRUD operations for users, vehicles, and trips
 - ✅ Advanced fleet management capabilities
@@ -309,6 +332,44 @@ curl -X POST http://localhost:4000/api/trips \
 - `PUT /:id` — update user (admin only)
 - `DELETE /:id` — remove user (admin only)
 
+## Real-time Features (Socket.IO)
+
+### Socket.IO Connection
+Connect to the real-time server using Socket.IO client:
+
+```javascript
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:4000', {
+  auth: {
+    token: 'YOUR_JWT_TOKEN'
+  }
+});
+```
+
+### Real-time Events
+
+**Client → Server Events:**
+- `trip_status_update` - Driver updates trip status
+- `location_update` - Driver sends GPS location
+- `emergency_alert` - Driver sends emergency alert
+- `maintenance_alert` - Driver reports maintenance issue
+
+**Server → Client Events:**
+- `trip_assigned` - New trip assignment notification
+- `trip_status_changed` - Trip status update notification
+- `driver_connected` - Driver online notification
+- `driver_disconnected` - Driver offline notification
+- `driver_location_update` - Real-time location tracking
+- `emergency_alert` - Emergency situation notification
+- `maintenance_alert` - Vehicle maintenance notification
+- `overdue_trip_alert` - Overdue trip notification
+
+### Role-based Rooms
+- **Drivers**: Personal room for individual notifications
+- **Fleet Managers**: Receive all trip and maintenance updates
+- **Admins**: Full access to all real-time events
+
 ## Fleet Manager Dashboard
 
 ### Dashboard Overview (`GET /api/vehicles/dashboard/overview`)
@@ -424,7 +485,7 @@ curl -X GET http://localhost:4000/api/vehicles/dashboard/overview \
   -H "Authorization: Bearer <token>"
 ```
 
-## What's Next (Future Enhancements)
+## (Future Enhancements)
 - **Real-time Updates**: Socket.IO integration for live trip tracking
 - **Advanced Analytics**: Trip efficiency metrics, fuel consumption analysis
 - **Geolocation**: GPS tracking and route optimization

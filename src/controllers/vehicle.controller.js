@@ -176,7 +176,7 @@ export const deleteVehicle = async (req, res) => {
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' });
     }
-
+  
     await Vehicle.findByIdAndDelete(req.params.id);
     res.json({ message: 'Vehicle deleted successfully' });
   } catch (error) {

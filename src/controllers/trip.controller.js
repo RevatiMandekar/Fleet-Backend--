@@ -1,6 +1,11 @@
 import Trip from '../models/Trip.js';
 import Vehicle from '../models/Vehicle.js';
 import User from '../models/User.js';
+import { emitToRole, emitToUser, emitToAll } from '../socket/socketHandlers.js';
+import { 
+  sendTripAssignmentEmail, 
+  sendTripAssignmentEmailDev 
+} from '../services/emailService.js';
 
 // Get all trips with population
 export const getAllTrips = async (req, res) => {
@@ -142,9 +147,73 @@ export const createTrip = async (req, res) => {
       .populate('driverId', 'name email role')
       .populate('createdBy', 'name email role');
     
+    // Emit real-time notification to driver
+    emitToUser(driverId, 'trip_assigned', {
+      tripId: trip._id,
+      origin: trip.origin,
+      destination: trip.destination,
+      startTime: trip.startTime,
+      vehicle: populatedTrip.vehicleId,
+      assignedBy: populatedTrip.createdBy.name,
+      timestamp: new Date()
+    });
+    
+    // Emit to fleet managers and admins
+    emitToRole('fleet_manager', 'trip_created', {
+      tripId: trip._id,
+      driver: populatedTrip.driverId,
+      vehicle: populatedTrip.vehicleId,
+      origin: trip.origin,
+      destination: trip.destination,
+      startTime: trip.startTime,
+      createdBy: populatedTrip.createdBy.name,
+      timestamp: new Date()
+    });
+    
+    emitToRole('admin', 'trip_created', {
+      tripId: trip._id,
+      driver: populatedTrip.driverId,
+      vehicle: populatedTrip.vehicleId,
+      origin: trip.origin,
+      destination: trip.destination,
+      startTime: trip.startTime,
+      createdBy: populatedTrip.createdBy.name,
+      timestamp: new Date()
+    });
+    
+    // Send email notification to driver
+    const emailSent = process.env.NODE_ENV === 'production' 
+      ? await sendTripAssignmentEmail(
+          populatedTrip.driverId.email, 
+          populatedTrip.driverId.name, 
+          {
+            origin: trip.origin,
+            destination: trip.destination,
+            startTime: trip.startTime,
+            endTime: trip.endTime,
+            distance: trip.distance,
+            notes: trip.notes,
+            vehicle: populatedTrip.vehicleId
+          }
+        )
+      : await sendTripAssignmentEmailDev(
+          populatedTrip.driverId.email, 
+          populatedTrip.driverId.name, 
+          {
+            origin: trip.origin,
+            destination: trip.destination,
+            startTime: trip.startTime,
+            endTime: trip.endTime,
+            distance: trip.distance,
+            notes: trip.notes,
+            vehicle: populatedTrip.vehicleId
+          }
+        );
+    
     res.status(201).json({
       message: 'Trip created successfully',
-      trip: populatedTrip
+      trip: populatedTrip,
+      emailNotificationSent: emailSent
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -269,6 +338,38 @@ export const startTrip = async (req, res) => {
      .populate('driverId', 'name email role')
      .populate('createdBy', 'name email role');
     
+    // Emit real-time trip status update
+    emitToRole('fleet_manager', 'trip_status_changed', {
+      tripId: updatedTrip._id,
+      status: 'in_progress',
+      driverId: updatedTrip.driverId._id,
+      driverName: updatedTrip.driverId.name,
+      vehicle: updatedTrip.vehicleId,
+      origin: updatedTrip.origin,
+      destination: updatedTrip.destination,
+      actualStartTime: updatedTrip.startTime,
+      timestamp: new Date()
+    });
+    
+    emitToRole('admin', 'trip_status_changed', {
+      tripId: updatedTrip._id,
+      status: 'in_progress',
+      driverId: updatedTrip.driverId._id,
+      driverName: updatedTrip.driverId.name,
+      vehicle: updatedTrip.vehicleId,
+      origin: updatedTrip.origin,
+      destination: updatedTrip.destination,
+      actualStartTime: updatedTrip.startTime,
+      timestamp: new Date()
+    });
+    
+    // Confirm to driver
+    emitToUser(updatedTrip.driverId._id, 'trip_status_confirmed', {
+      tripId: updatedTrip._id,
+      status: 'in_progress',
+      timestamp: new Date()
+    });
+    
     res.json({
       message: 'Trip started successfully',
       trip: updatedTrip
@@ -323,6 +424,42 @@ export const completeTrip = async (req, res) => {
         assignedDriver: null 
       });
     }
+    
+    // Emit real-time trip completion notification
+    emitToRole('fleet_manager', 'trip_status_changed', {
+      tripId: updatedTrip._id,
+      status: 'completed',
+      driverId: updatedTrip.driverId._id,
+      driverName: updatedTrip.driverId.name,
+      vehicle: updatedTrip.vehicleId,
+      origin: updatedTrip.origin,
+      destination: updatedTrip.destination,
+      endTime: updatedTrip.endTime,
+      distance: updatedTrip.distance,
+      fuelConsumed: updatedTrip.fuelConsumed,
+      timestamp: new Date()
+    });
+    
+    emitToRole('admin', 'trip_status_changed', {
+      tripId: updatedTrip._id,
+      status: 'completed',
+      driverId: updatedTrip.driverId._id,
+      driverName: updatedTrip.driverId.name,
+      vehicle: updatedTrip.vehicleId,
+      origin: updatedTrip.origin,
+      destination: updatedTrip.destination,
+      endTime: updatedTrip.endTime,
+      distance: updatedTrip.distance,
+      fuelConsumed: updatedTrip.fuelConsumed,
+      timestamp: new Date()
+    });
+    
+    // Confirm to driver
+    emitToUser(updatedTrip.driverId._id, 'trip_status_confirmed', {
+      tripId: updatedTrip._id,
+      status: 'completed',
+      timestamp: new Date()
+    });
     
     res.json({
       message: 'Trip completed successfully',
