@@ -16,7 +16,7 @@ import {
 } from "../controllers/vehicle.controller.js";
 import { authenticate } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/role.middleware.js";
-import { validateVehicle } from "../middlewares/validation.middleware.js";
+import { validateVehicle } from "../middlewares/joiValidation.middleware.js";
 
 const router = express.Router();
 

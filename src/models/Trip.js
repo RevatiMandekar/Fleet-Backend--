@@ -54,10 +54,14 @@ const tripSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for better query performance
-tripSchema.index({ vehicleId: 1, status: 1 });
-tripSchema.index({ driverId: 1, status: 1 });
-tripSchema.index({ startTime: 1 });
+// Indexes for better query performance and optimized queries
+tripSchema.index({ vehicleId: 1, status: 1 }); // Compound index for vehicle status queries
+tripSchema.index({ driverId: 1, status: 1 }); // Compound index for driver status queries
+tripSchema.index({ startTime: 1, status: 1 }); // Compound index for overdue trip queries
+tripSchema.index({ endTime: 1, status: 1 }); // Compound index for completed trip queries
+tripSchema.index({ createdAt: -1 }); // Index for sorting by creation date
+tripSchema.index({ driverId: 1, createdAt: -1 }); // Compound index for driver trip history
+tripSchema.index({ vehicleId: 1, createdAt: -1 }); // Compound index for vehicle trip history
 
 // Virtual for trip duration
 tripSchema.virtual('duration').get(function() {

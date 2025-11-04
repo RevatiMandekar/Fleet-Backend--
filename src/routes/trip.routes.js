@@ -13,7 +13,7 @@ import {
 } from '../controllers/trip.controller.js';
 import { authenticate } from '../middlewares/auth.middleware.js';
 import { authorize } from '../middlewares/role.middleware.js';
-import { validateTrip, validateTripUpdate } from '../middlewares/validation.middleware.js';
+import { validateTrip, validateTripUpdate } from '../middlewares/joiValidation.middleware.js';
 
 const router = express.Router();
 

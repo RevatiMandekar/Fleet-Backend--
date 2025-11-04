@@ -7,10 +7,21 @@ import {
   sendTripAssignmentEmailDev 
 } from '../services/emailService.js';
 
-// Get all trips with population
+// Get all trips with population, pagination, and filtering
 export const getAllTrips = async (req, res) => {
   try {
-    const { status, driverId, vehicleId, page = 1, limit = 10 } = req.query;
+    const { 
+      status, 
+      driverId, 
+      vehicleId, 
+      page = 1, 
+      limit = 10,
+      startDate,
+      endDate,
+      sortBy = 'startTime',
+      sortOrder = 'desc',
+      search
+    } = req.query;
     
     // Build filter object
     const filter = {};
@@ -18,21 +29,58 @@ export const getAllTrips = async (req, res) => {
     if (driverId) filter.driverId = driverId;
     if (vehicleId) filter.vehicleId = vehicleId;
     
+    // Date range filtering
+    if (startDate || endDate) {
+      filter.startTime = {};
+      if (startDate) filter.startTime.$gte = new Date(startDate);
+      if (endDate) filter.startTime.$lte = new Date(endDate);
+    }
+    
+    // Search across origin and destination
+    if (search) {
+      filter.$or = [
+        { origin: new RegExp(search, 'i') },
+        { destination: new RegExp(search, 'i') },
+        { notes: new RegExp(search, 'i') }
+      ];
+    }
+    
+    // Build sort object
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+    
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const limitNum = parseInt(limit);
+    
     const trips = await Trip.find(filter)
       .populate('vehicleId', 'vehicleNumber type status')
       .populate('driverId', 'name email role')
       .populate('createdBy', 'name email role')
-      .sort({ startTime: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .sort(sort)
+      .limit(limitNum)
+      .skip(skip);
     
     const total = await Trip.countDocuments(filter);
     
     res.json({
       trips,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      total
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limitNum),
+        totalItems: total,
+        itemsPerPage: limitNum,
+        hasNextPage: skip + limitNum < total,
+        hasPrevPage: parseInt(page) > 1
+      },
+      filters: {
+        status: status || null,
+        driverId: driverId || null,
+        vehicleId: vehicleId || null,
+        startDate: startDate || null,
+        endDate: endDate || null,
+        search: search || null
+      }
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -216,7 +264,7 @@ export const createTrip = async (req, res) => {
       emailNotificationSent: emailSent
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    next(error); // Use error handler middleware
   }
 };
 

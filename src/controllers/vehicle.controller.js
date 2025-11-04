@@ -1,10 +1,75 @@
 import Vehicle from '../models/Vehicle.js';
 
-// Get all vehicles
+// Get all vehicles with pagination and filtering
 export const getAllVehicles = async (req, res) => {
   try {
-    const vehicles = await Vehicle.find().populate('assignedDriver', 'name email');
-    res.json(vehicles);
+    const { 
+      page = 1, 
+      limit = 10, 
+      status, 
+      type, 
+      make, 
+      model,
+      search,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+    
+    // Build filter object
+    const filter = {};
+    if (status) filter.status = status;
+    if (type) filter.type = type;
+    if (make) filter.make = new RegExp(make, 'i');
+    if (model) filter.model = new RegExp(model, 'i');
+    
+    // Search across multiple fields
+    if (search) {
+      filter.$or = [
+        { vehicleNumber: new RegExp(search, 'i') },
+        { licensePlate: new RegExp(search, 'i') },
+        { make: new RegExp(search, 'i') },
+        { model: new RegExp(search, 'i') },
+        { vin: new RegExp(search, 'i') }
+      ];
+    }
+    
+    // Build sort object
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+    
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const limitNum = parseInt(limit);
+    
+    // Execute query with pagination
+    const vehicles = await Vehicle.find(filter)
+      .populate('assignedDriver', 'name email')
+      .populate('createdBy', 'name email role')
+      .sort(sort)
+      .limit(limitNum)
+      .skip(skip);
+    
+    // Get total count for pagination
+    const total = await Vehicle.countDocuments(filter);
+    
+    res.json({
+      vehicles,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limitNum),
+        totalItems: total,
+        itemsPerPage: limitNum,
+        hasNextPage: skip + limitNum < total,
+        hasPrevPage: parseInt(page) > 1
+      },
+      filters: {
+        status: status || null,
+        type: type || null,
+        make: make || null,
+        model: model || null,
+        search: search || null
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

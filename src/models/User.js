@@ -11,7 +11,16 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: { type: Date },
   loginAttempts: { type: Number, default: 0 },
   lockUntil: { type: Date }
+}, {
+  timestamps: true
 });
+
+// Indexes for better query performance
+// Note: email already has index from unique: true
+userSchema.index({ role: 1 }); // Index for role-based queries
+userSchema.index({ role: 1, createdAt: -1 }); // Compound index for role + date sorting
+userSchema.index({ resetPasswordToken: 1 }); // Index for password reset queries
+userSchema.index({ resetPasswordExpires: 1 }); // Index for expired token cleanup
 
 // Encrypt password before saving
 userSchema.pre('save', async function (next) {

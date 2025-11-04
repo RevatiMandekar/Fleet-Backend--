@@ -4,7 +4,6 @@ const vehicleSchema = new mongoose.Schema({
   vehicleNumber: { 
     type: String, 
     required: true, 
-    unique: true,
     trim: true,
     uppercase: true
   },
@@ -37,15 +36,13 @@ const vehicleSchema = new mongoose.Schema({
   },
   licensePlate: { 
     type: String, 
-    required: true,
-    unique: true,
+    required: true, 
     trim: true,
     uppercase: true
   },
   vin: { 
     type: String, 
-    required: true,
-    unique: true,
+    required: true, 
     trim: true,
     uppercase: true,
     validate: {
@@ -105,12 +102,18 @@ const vehicleSchema = new mongoose.Schema({
 });
 
 // Indexes for better query performance
-vehicleSchema.index({ vehicleNumber: 1 });
-vehicleSchema.index({ licensePlate: 1 });
-vehicleSchema.index({ vin: 1 });
-vehicleSchema.index({ status: 1 });
-vehicleSchema.index({ assignedDriver: 1 });
-vehicleSchema.index({ type: 1 });
+// Unique indexes for fields that must be unique
+vehicleSchema.index({ vehicleNumber: 1 }, { unique: true });
+vehicleSchema.index({ licensePlate: 1 }, { unique: true });
+vehicleSchema.index({ vin: 1 }, { unique: true });
+
+// Compound and additional indexes for query optimization
+vehicleSchema.index({ status: 1, type: 1 }); // Compound index for status + type queries
+vehicleSchema.index({ assignedDriver: 1, status: 1 }); // Compound index for driver assignments
+vehicleSchema.index({ nextServiceDue: 1 }); // Index for maintenance queries
+vehicleSchema.index({ insuranceExpiry: 1 }); // Index for insurance queries
+vehicleSchema.index({ registrationExpiry: 1 }); // Index for registration queries
+vehicleSchema.index({ createdAt: -1 }); // Index for sorting by creation date
 
 // Virtual for vehicle age
 vehicleSchema.virtual('age').get(function() {
